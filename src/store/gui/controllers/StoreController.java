@@ -40,7 +40,7 @@ public class StoreController {
     /**     * Loads products from a file and refreshes the product list in the view.
       */
     public void loadProduct(){
-        File file = view.openFileChooser();
+        File file = view.openFileChooser(false);
         if (file != null){
             engine.loadProductsFromFile(file);
             view.refreshProductList(engine.getProducts());
@@ -66,7 +66,7 @@ public class StoreController {
       * @return true if the products were saved successfully, false otherwise.
       */
     public boolean saveProduct(){
-        File file = view.openFileChooser();
+        File file = view.openFileChooser(true);
         if (file != null){
             synchronized (this) {
                 engine.saveProductsToFile(file);

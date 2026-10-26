@@ -7,7 +7,6 @@ import store.products.Category;
 import store.products.Product;
 import store.orders.Order;
 import store.cart.Cart;
-import store.products.ProductCreator;
 import store.products.ProductFactory;
 
 
@@ -71,7 +70,7 @@ public class StoreEngine {
     /**     * Retrieves a list of all available products in stock.
       * @return List of available products.
       */
-    public List<Product> getAvailableProducts(){
+    public synchronized List<Product> getAvailableProducts(){
         List<Product> availableProducts = new ArrayList<>();
         for (Product p : products)
             if (p.getStock() > 0)
@@ -84,7 +83,7 @@ public class StoreEngine {
       * @param c The customer to register.
       * @return true if registration is successful, false if username already exists.
       */
-    public boolean registerCustomer(Customer c){
+    public synchronized boolean registerCustomer(Customer c){
         for (Customer customer : customers)
             if (customer.getUsername().equals(c.getUsername()))
                 return false;
@@ -96,12 +95,10 @@ public class StoreEngine {
       * @param cart The cart to create an order from.
       * @return The created Order object.
       */
-    public Order createOrderFromCart(Cart cart){
+    public synchronized Order createOrderFromCart(Cart cart){
         double totalAmount = cart.calculateTotal();
-        synchronized (StoreEngine.class) {
-            nextOrderId += 1;
-        }
-        Order newOrder = new Order(nextOrderId, new ArrayList<>(cart.getItems()), totalAmount);
+        int orderId = ++nextOrderId;
+        Order newOrder = new Order(orderId, new ArrayList<>(cart.getItems()), totalAmount);
         allOrders.add(newOrder);
         return newOrder;
 
@@ -110,15 +107,16 @@ public class StoreEngine {
     /**     * Retrieves a list of all orders in the store.
       * @return List of all orders.
       */
-    public List<Order> getAllOrders() {
-        return allOrders;
+    public synchronized List<Order> getAllOrders() {
+        return new ArrayList<>(allOrders);
+
     }
 
     /**     * Retrieves a list of all products in the store.
       * @return List of all products.
       */
     public List<Product> getProducts() {
-        return products;
+        return new ArrayList<>(products);
     }
 
 
@@ -138,7 +136,7 @@ public class StoreEngine {
     /**     * Saves the current list of products to a file in CSV format.
       * @param file The file to save the products to.
       */
-    public void saveProductsToFile(File file){
+    public synchronized void saveProductsToFile(File file){
         try (PrintWriter pw = new PrintWriter(file)){
             for (Product p : products)
                 pw.println(p.toCSV());
@@ -157,15 +155,20 @@ public class StoreEngine {
         try (Scanner sc = new Scanner(file)){
             while (sc.hasNextLine()){
                 String line = sc.nextLine();
-                String[] args = line.split(",");
-                Product p = ProductFactory.create(args);
-                products_temp.add(p);
+                try {
+                    String[] args = line.split(",");
+                    Product p = ProductFactory.create(args);
+                    products_temp.add(p);
+                } catch (Exception e) {
+                    System.out.println("Skipping invalid line: " + line);
+                }
             }
 
         } catch (IOException e){
-            System.out.println("error loading a product");
+            System.out.println("error loading file");
+            return;
         }
-        synchronized (products) {
+        synchronized (this) {
             products.clear();
             products.addAll(products_temp);
         }
@@ -187,9 +190,9 @@ public class StoreEngine {
       * @param category The category to filter products by.
       * @return List of filtered products.
       */
-    public List<Product> getFilteredProducts(Category category){
+    public synchronized List<Product> getFilteredProducts(Category category){
         if (category == null)
-            return products;
+            return new ArrayList<>(products);
         List<Product> filteredProducts = new ArrayList<>();
         for (Product p : products)
             if (p.getCategory() == category)
@@ -263,7 +266,7 @@ public class StoreEngine {
       * @param searchText The text to search for.
       * @return List of products matching the search criteria.
       */
-    public List<Product> searchProducts(String searchText){
+    public synchronized List<Product> searchProducts(String searchText){
         List<Product> result = new ArrayList<>();
         String lowerSearchText = searchText.toLowerCase();
         for (Product p : products){

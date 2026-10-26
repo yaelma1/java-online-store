@@ -112,7 +112,7 @@ public class Order implements Persistable {
 
     public String toCSV(){
         StringBuilder sb = new StringBuilder();
-        sb.append(orderID).append(",").append(totalAmount).append(status).append("\n");
+        sb.append(orderID).append(",").append(totalAmount).append(",").append(status).append("\n");
         for (CartItem item : items)
             sb.append(item.toCSV()).append("\n");
         return sb.toString();

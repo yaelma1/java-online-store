@@ -73,18 +73,22 @@ public class Customer extends User{
     public boolean checkout(){
         if (cart.getItems().isEmpty())
             return false;
-        Order newOrder = engine.createOrderFromCart(cart);
-        if (newOrder != null) {
-            for (CartItem item : cart.getItems()){
-                Product product = item.getProduct();
-                int Quantity = item.getQuantity();
-                product.decreaseStock(Quantity);
+
+        for (CartItem item : cart.getItems()) {
+            Product product = item.getProduct();
+            if (product.getStock() < item.getQuantity())
+                return false;
+        }
+        for (CartItem item : cart.getItems()){
+            Product product = item.getProduct();
+            int quantity = item.getQuantity();
+            product.decreaseStock(quantity);
             }
-            orderHistory.add(newOrder);
+        Order newOrder = engine.createOrderFromCart(cart);
+
+        orderHistory.add(newOrder);
             cart.clearCart();
             return true;
-        }
-        return false;
     }
 
     /**     * Gets the customer's order history.

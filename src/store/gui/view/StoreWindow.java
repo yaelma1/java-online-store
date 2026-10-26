@@ -138,13 +138,16 @@ public class StoreWindow extends JFrame {
 
     /*  Opens a file chooser dialog and returns the selected file
      */
-    public File openFileChooser(){
+    public File openFileChooser(boolean isSave){
         JFileChooser chooser = new JFileChooser();
-        int result = chooser.showOpenDialog(this);
+        int result;
+        if(isSave)
+            result = chooser.showSaveDialog(this);
+        else
+            result = chooser.showOpenDialog(this);
 
         if (result == JFileChooser.APPROVE_OPTION)
             return chooser.getSelectedFile();
-
         return null;
     }
 

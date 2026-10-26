@@ -14,10 +14,6 @@ public class ProductFactory {
      * @return
      */
     public static Product create(String[] args){
-        for (int i = 0; i < args.length; i++) {
-            System.out.println(i + " -> " + args[i]);
-        }
-
         String type = args[0];
 
         Product p;
